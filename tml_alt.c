@@ -143,14 +143,6 @@ static int pnGetint( void ) {
     return (buf[0] != '0');
 }
 
-static void wait4interrupt( void ) {
-    struct pollfd fds[1];
-    fds[0].fd = iInterruptFd;
-    fds[0].events = POLLPRI;
-    int timeout_msecs = 10000;
-    while (!pnGetint()) poll(fds, 1, timeout_msecs);
-}
-
 int tml_open(int * handle)
 {
     iInterruptFd = verifyPin(PIN_INT, 0, EDGE_RISING);
@@ -197,36 +189,39 @@ int tml_send(int handle, char *pBuff, int buffLen)
 
 int tml_receive(int handle, char *pBuff, int buffLen)
 {
-    int numRead;
+    int numRead = 0;
     struct timeval tv;
     fd_set rfds;
     int ret;
 
-    FD_ZERO(&rfds);
-    FD_SET(handle, &rfds);
-    tv.tv_sec = 2;
-    tv.tv_usec = 1;
-    ret = select(handle+1, &rfds, NULL, NULL, &tv);
-    if(ret <= 0) return 0;
+    if(pnGetint())
+    {
+        FD_ZERO(&rfds);
+        FD_SET(handle, &rfds);
+        tv.tv_sec = 2;
+        tv.tv_usec = 1;
+        ret = select(handle+1, &rfds, NULL, NULL, &tv);
+        if(ret <= 0) return 0;
 
-    wait4interrupt();
+        ret = read(handle, pBuff, 3);
+        if (ret <= 0) return 0;
+        numRead = 3;
+        if(pBuff[2] + 3 > buffLen) return 0;
 
-    ret = read(handle, pBuff, 3);
-    if (ret <= 0) return 0;
-    numRead = 3;
-    if(pBuff[2] + 3 > buffLen) return 0;
+        ret = read(handle, &pBuff[3], pBuff[2]);
+        if (ret <= 0) return 0;
+        numRead += ret;
 
-    ret = read(handle, &pBuff[3], pBuff[2]);
-    if (ret <= 0) return 0;
-    numRead += ret;
-
-    PRINT_BUF("<< ", pBuff, numRead);
+        PRINT_BUF("<< ", pBuff, numRead);
+    }
 
     return numRead;
 }
 
 int tml_transceive(int handle, char *pTx, int TxLen, char *pRx, int RxLen)
 {
+    int NbBytes = 0;
     if(tml_send(handle, pTx, TxLen) == 0) return 0;
-    return tml_receive(handle, pRx, RxLen);
+    while(NbBytes==0) NbBytes = tml_receive(handle, pRx, RxLen);
+    return NbBytes;
 }
