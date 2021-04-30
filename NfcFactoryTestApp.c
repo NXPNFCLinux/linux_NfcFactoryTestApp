@@ -49,7 +49,7 @@ static void Functional (int handle)
     char NCIRestartDiscovery[] = {0x21, 0x06, 0x01, 0x03};
     char Answer[256];
 
-    printf("Continuous RF ON test - please tap a card ...\n");
+    printf("Functional test mode, starting discovery loop ...\n");
     tml_transceive(handle, NCIStartDiscovery, sizeof(NCIStartDiscovery), Answer, sizeof(Answer));
     if((Answer[0] != 0x41) || (Answer[1] != 0x03) || (Answer[3] != 0x00)) {
         printf("Cannot start discovery loop\n");
