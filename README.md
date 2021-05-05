@@ -16,5 +16,5 @@ To build the application: $ make <option> with <option>:
   - alt: application communicates with PN71xx through alternate solution (see tml_alt.c for connection definition)
   - dummy: dummy example to implement your own communication channel to PN71xx
 
-More information can be found in AN11697: http://www.nxp.com/documents/application_note/AN11697.pdf
+More information can be found in AN11697: https://www.nxp.com/doc/AN11697
   
