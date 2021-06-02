@@ -21,4 +21,4 @@ To build the application: "$ make <option>" with <option>:
 
 Adding "DEBUG=ON" statement to the make command configure the application to display all NCI exchanges.
 
-More information about this application can be found in AN11697: http://www.nxp.com/documents/application_note/AN11697.pdf
+More information about this application can be found in AN11697: http://www.nxp.com/doc/AN11697
