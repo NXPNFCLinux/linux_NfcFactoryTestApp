@@ -2,9 +2,8 @@ CC=gcc
 
 CFILES=NfcFactoryTestApp.c
 
-CFILES_PN5XX= tml_pn5xx.c
+CFILES_DRV= tml_drv.c
 CFILES_ALT= tml_alt.c
-CFILES_DUMMY= tml_dummy.c
 
 INCLUDES= -I/usr/include/ -I./
 
@@ -12,14 +11,19 @@ LIBS=
 
 CFLAGS=-Wall $(INCLUDES)
 
-pn5xx:
-	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_PN5XX) $(LIBS)
+drv:
+ifeq ("$(DEBUG)","ON")
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) -DDEBUG $(CFILES) $(CFILES_DRV) $(LIBS)
+else
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_DRV) $(LIBS)
+endif
 
 alt:
+ifeq ("$(DEBUG)","ON")
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) -DDEBUG $(CFILES) $(CFILES_ALT) $(LIBS)
+else
 	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_ALT) $(LIBS)
-
-dummy:
-	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_DUMMY) $(LIBS)
+endif
 
 clean:
 	rm NfcFactoryTestApp

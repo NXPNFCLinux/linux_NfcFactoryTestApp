@@ -14,8 +14,6 @@
 
 #include <stdio.h>
 
-//#define DEBUG
-
 #ifdef DEBUG
 #define PRINT_BUF(x,y,z)  {int loop; printf(x); \
                            for(loop=0;loop<z;loop++) printf("%.2x ", y[loop]); \

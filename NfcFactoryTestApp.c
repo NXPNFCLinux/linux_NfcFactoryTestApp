@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <tml.h>
 
+#define print_buf(x,y,z)  {int loop; printf(x); for(loop=0;loop<z;loop++) printf("0x%.2x ", y[loop]); printf("\n");}
+
 static char gNfcController_generation = 0;
 
 static void RfOn (int handle)
@@ -91,7 +93,7 @@ static void SetRF (int handle)
     char Answer[255];
     unsigned int temp[4];
 
-    printf("Set RF settings menu (enter 0 during transition ID selection step to leave):");
+    printf("Set RF settings menu (enter 0 during transition ID selection step to leave):\n");
 
     while (1)
     {
@@ -154,6 +156,160 @@ static void SetRF (int handle)
     }
 }
 
+static void GetNciParam (int handle)
+{
+    char get[] = {0x20, 0x03, 0x02, 0x01, 0x00};
+    char Answer[255];
+    unsigned int temp;
+
+    printf("Get NCI parameter value menu (enter 'ff' during tag ID selection step to leave):\n");
+
+    while (1)
+    {
+	printf("\n");
+
+	printf("- enter NCI parameter tag ID in (hexadecimal): ");
+	scanf("%x", &temp);
+
+	if(temp == 0xff) break;
+
+	get[4] = (char) temp;
+
+	tml_transceive(handle, get, sizeof(get), Answer, sizeof(Answer));
+
+	if ((Answer[0] != 0x40) || (Answer[1] != 0x03) || (Answer[3] != 0x00)) {
+	    printf("Error, cannot get parameter value\n");
+        }
+	else {
+            int loop;
+            printf("Parameter %.2X = ", Answer[5]);
+            for(loop=0; loop<Answer[6]; loop++) printf("%.2X ", Answer[7+loop]);
+            printf("\n");
+        }
+    }
+}
+
+static void SetNciParam (int handle)
+{
+    char set[255] = {0x20, 0x02, 0x00, 0x01, 0x00, 0x00};
+    char Answer[255];
+    unsigned int temp;
+    int loop;
+
+    printf("Set NCI parameter value menu (enter ff during tag ID selection step to leave):\n");
+
+    while (1)
+    {
+	printf("\n");
+
+	printf("- enter NCI parameter tag ID in (hexadecimal): ");
+	scanf("%x", &temp);
+
+	if(temp == 0xff) break;
+
+	set[4] = (char) temp;
+
+	printf("- enter length: ");
+	scanf("%x", &temp);
+	if (temp == 0) {
+	    printf("Wrong length\n");
+	    continue;
+	}
+	set[5] = temp;
+	set[2] = 3 + temp;
+
+	printf("- enter value (in hexadecimal) LSB first: ");
+        for(loop=0; loop<set[5]; loop++) {
+	    scanf("%x", &temp);
+	    set[6+loop] = (char) temp;
+        }
+
+	tml_transceive(handle, set, set[2] + 3, Answer, sizeof(Answer));
+
+	if ((Answer[0] != 0x40) || (Answer[1] != 0x02) || (Answer[3] != 0x00))
+	    printf("Error, cannot set the NCI parameter\n");
+	else
+	    printf("NCI parameter successfully set\n");
+    }
+}
+
+static void GetPropParam (int handle)
+{
+    char get[] = {0x20, 0x03, 0x03, 0x01, 0xA0, 0x00};
+    char Answer[255];
+    unsigned int temp;
+
+    printf("Get proprietary parameter (starting with 0xA0) value menu (enter 'ff' during tag ID selection step to leave):\n");
+
+    while (1)
+    {
+	printf("\n");
+
+	printf("- enter NCI parameter tag ID in (hexadecimal): A0");
+	scanf("%x", &temp);
+
+	if(temp == 0xff) break;
+
+	get[5] = (char) temp;
+
+	tml_transceive(handle, get, sizeof(get), Answer, sizeof(Answer));
+
+	if ((Answer[0] != 0x40) || (Answer[1] != 0x03) || (Answer[3] != 0x00)) {
+	    printf("Error, cannot read parameter value\n");
+        }
+	else {
+            int loop;
+            printf("Parameter A0%.2X = ", Answer[6]);
+            for(loop=0; loop<Answer[7]; loop++) printf("%.2X ", Answer[8+loop]);
+            printf("\n");
+        }
+    }
+}
+
+static void SetPropParam (int handle)
+{
+    char set[255] = {0x20, 0x02, 0x00, 0x01, 0xA0, 0x00, 0x00};
+    char Answer[255];
+    unsigned int temp;
+    int loop;
+
+    printf("Set proprietary parameter value menu (enter ff during tag ID selection step to leave):\n");
+
+    while (1)
+    {
+	printf("\n");
+
+	printf("- enter proprietary parameter tag ID in (hexadecimal): A0");
+	scanf("%x", &temp);
+
+	if(temp == 0xff) break;
+
+	set[5] = (char) temp;
+
+	printf("- enter length: ");
+	scanf("%x", &temp);
+	if (temp == 0) {
+	    printf("Wrong length\n");
+	    continue;
+	}
+	set[6] = temp;
+	set[2] = 4 + temp;
+
+	printf("- enter value (in hexadecimal) LSB first: ");
+        for(loop=0; loop<set[6]; loop++) {
+	    scanf("%x", &temp);
+	    set[7+loop] = (char) temp;
+        }
+
+	tml_transceive(handle, set, set[2] + 3, Answer, sizeof(Answer));
+
+	if ((Answer[0] != 0x40) || (Answer[1] != 0x02) || (Answer[3] != 0x00))
+	    printf("Error, cannot set the proprietary parameter\n");
+	else
+	    printf("Proprietary parameter successfully set\n");
+    }
+}
+
 static void Prbs (int handle)
 {
     char NCIPrbsPN7120[] = {0x2F, 0x30, 0x04, 0x00, 0x00, 0x01, 0x01};
@@ -199,15 +355,57 @@ static void Standby (int handle)
     fgets(Answer, sizeof(Answer), stdin);
 }
 
-int main()
+static int reset_controller(int handle)
 {
-    int nHandle;
     char NCICoreReset[] = {0x20, 0x00, 0x01, 0x01};
     char NCICoreInit1_0[] = {0x20, 0x01, 0x00};
     char NCICoreInit2_0[] = {0x20, 0x01, 0x02, 0x00, 0x00};
-    char NCIDisableStandby[] = {0x2F, 0x00, 0x01, 0x00};
     char Answer[256];
     int NbBytes = 0;
+
+    tml_reset(handle);
+    tml_transceive(handle, NCICoreReset, sizeof(NCICoreReset), Answer, sizeof(Answer));
+
+    /* Catch potential notification */
+    usleep(100*1000);
+    NbBytes = tml_receive(handle,  Answer, sizeof(Answer));
+    if((NbBytes == 12) && (Answer[0] == 0x60) && (Answer[1] == 0x00) && (Answer[3] == 0x02))
+    {
+	NbBytes = tml_transceive(handle, NCICoreInit2_0, sizeof(NCICoreInit2_0), Answer, sizeof(Answer));
+        if((NbBytes < 19) || (Answer[0] != 0x40) || (Answer[1] != 0x01) || (Answer[3] != 0x00))    {
+            printf("Error communicating with NFC Controller\n");
+            return -1;
+        }
+        gNfcController_generation = 3;
+    }
+    else
+    {
+	NbBytes = tml_transceive(handle, NCICoreInit1_0, sizeof(NCICoreInit1_0), Answer, sizeof(Answer));
+        if((NbBytes < 19) || (Answer[0] != 0x40) || (Answer[1] != 0x01) || (Answer[3] != 0x00))    {
+            printf("Error communicating with PN71xx NFC Controller\n");
+            return -1;
+        }
+
+        /* Retrieve NXP-NCI NFC Controller generation */
+        if (Answer[17+Answer[8]] == 0x08) {
+            gNfcController_generation = 1;
+        }
+        else if (Answer[17+Answer[8]] == 0x10) {
+            gNfcController_generation = 2;
+        }
+        else {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int main()
+{
+    int nHandle;
+    char NCIDisableStandby[] = {0x2F, 0x00, 0x01, 0x00};
+    char Answer[256];
+    int choice = 0;
 
     printf("\n----------------------------\n");
     printf("NFC Factory Test Application\n");
@@ -218,72 +416,55 @@ int main()
         return -1;
     }
 
-    tml_reset(nHandle);
-    tml_transceive(nHandle, NCICoreReset, sizeof(NCICoreReset), Answer, sizeof(Answer));
-
-    /* Catch potential notification */
-    usleep(100*1000);
-    NbBytes = tml_receive(nHandle,  Answer, sizeof(Answer));
-    if((NbBytes == 12) && (Answer[0] == 0x60) && (Answer[1] == 0x00) && (Answer[3] == 0x02))
-    {
-	NbBytes = tml_transceive(nHandle, NCICoreInit2_0, sizeof(NCICoreInit2_0), Answer, sizeof(Answer));
-        if((NbBytes < 19) || (Answer[0] != 0x40) || (Answer[1] != 0x01) || (Answer[3] != 0x00))    {
-            printf("Error communicating with NFC Controller\n");
-            return -1;
-        }
-
-        printf("PN7160 NFC controller detected\n");
-        gNfcController_generation = 3;
-    }
-    else
-    {
-	NbBytes = tml_transceive(nHandle, NCICoreInit1_0, sizeof(NCICoreInit1_0), Answer, sizeof(Answer));
-        if((NbBytes < 19) || (Answer[0] != 0x40) || (Answer[1] != 0x01) || (Answer[3] != 0x00))    {
-            printf("Error communicating with PN71xx NFC Controller\n");
-            return -1;
-        }
-
-        /* Retrieve NXP-NCI NFC Controller generation */
-        if (Answer[17+Answer[8]] == 0x08) {
-            printf("PN7120 NFC controller detected\n");
-            gNfcController_generation = 1;
-        }
-        else if (Answer[17+Answer[8]] == 0x10) {
-            printf("PN7150 NFC controller detected\n");
-            gNfcController_generation = 2;
-        }
-        else {
-            printf("Wrong NFC controller detected\n");
-            return -1;
-        }
+    if(reset_controller(nHandle) != 0) {
+        printf("Error communicating with the NFC Controller\n");
+        return -1;
     }
 
+    switch(gNfcController_generation) {
+    case 1: printf("PN7120 NFC controller detected\n"); break;
+    case 2: printf("PN7150 NFC controller detected\n"); break;
+    case 3: printf("PN7160 NFC controller detected\n"); break;
+    default: printf("Wrong NFC controller detected\n"); break;
+    }
+
+    /* Disable standby mode */
     tml_transceive(nHandle, NCIDisableStandby, sizeof(NCIDisableStandby), Answer, sizeof(Answer));
 
-    printf("Select the test to run:\n");
-    printf("\t 1. Continuous RF ON mode\n");
-    printf("\t 2. Functional mode\n");
-    printf("\t 3. PRBS mode\n");
-    printf("\t 4. Standby mode\n");
-    printf("\t 5. Dump RF settings\n");
-    printf("\t 6. Set RF setting\n");
-    printf("Your choice: ");
-    scanf("%d", &NbBytes);
+    do {
+        printf("Select the test to run:\n");
+        printf("\t 1. Continuous RF ON mode\n");
+        printf("\t 2. Functional mode\n");
+        printf("\t 3. PRBS mode\n");
+        printf("\t 4. Standby mode\n");
+        printf("\t 5. Dump RF settings\n");
+        printf("\t 6. Set RF setting\n");
+        printf("\t 7. Get NCI parameter value\n");
+        printf("\t 8. Set NCI parameter value\n");
+        printf("\t 9. Get proprietary parameter value\n");
+        printf("\t10. Set proprietary parameter value\n");
+        printf("enter 0 to leave the application\n");
+        printf("Your choice: ");
+        scanf("%d", &choice);
 
-    switch(NbBytes) {
-        case 1: RfOn(nHandle);              break;
-        case 2: Functional(nHandle);        break;
-        case 3: Prbs(nHandle);     	    break;
-        case 4: Standby(nHandle);  	    break;
-        case 5: Dump(nHandle);     	    break;
-        case 6: SetRF(nHandle);    	    break;
-        default: printf("Wrong choice\n");  break;
-    }
-
-    fgets(Answer, sizeof(Answer), stdin);
+        switch(choice) {
+	    case 0: break;
+	    case 1: RfOn(nHandle); break;
+            case 2: Functional(nHandle); break;
+            case 3: Prbs(nHandle); break;
+            case 4: Standby(nHandle); break;
+            case 5: Dump(nHandle); break;
+            case 6: SetRF(nHandle); break;
+            case 7: GetNciParam(nHandle); break;
+            case 8: SetNciParam(nHandle); break;
+            case 9: GetPropParam(nHandle); break;
+            case 10: SetPropParam(nHandle); break;
+            default: printf("Wrong choice\n"); break;
+        }
+    } while(choice != 0);
 
     tml_reset(nHandle);
     tml_close(nHandle);
 
-     return 0;
+    return 0;
 }

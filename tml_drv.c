@@ -21,8 +21,11 @@
 
 int tml_open(int *handle)
 {
-    *handle = open((char const *)"/dev/pn544", O_RDWR);
-    if (*handle < 0) return -1;
+    *handle = open((char const *)"/dev/nxpnfc", O_RDWR);
+    if (*handle < 0) {
+        *handle = open((char const *)"/dev/pn544", O_RDWR);
+        if (*handle < 0) return -1;
+    }
     return 0;
 }
 
