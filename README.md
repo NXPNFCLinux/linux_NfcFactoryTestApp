@@ -7,6 +7,7 @@ Allows setting the NFC controller into either:
  - Functional mode (card detection)
  - PRBS (Pseudo Random Binary Sequence) mode (continuous modulation)
  - Standby mode (for power consumption measurment)
+
 Additionnaly, the application allows to:
  - Dump all RF settings values
  - Set RF settings
