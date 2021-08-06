@@ -369,6 +369,14 @@ static int reset_controller(int handle)
     /* Catch potential notification */
     usleep(100*1000);
     NbBytes = tml_receive(handle,  Answer, sizeof(Answer));
+
+
+    tml_transceive(handle, NCICoreReset, sizeof(NCICoreReset), Answer, sizeof(Answer));
+
+    /* Catch potential notification */
+    usleep(100*1000);
+    NbBytes = tml_receive(handle,  Answer, sizeof(Answer));
+
     if((NbBytes == 12) && (Answer[0] == 0x60) && (Answer[1] == 0x00) && (Answer[3] == 0x02))
     {
 	NbBytes = tml_transceive(handle, NCICoreInit2_0, sizeof(NCICoreInit2_0), Answer, sizeof(Answer));

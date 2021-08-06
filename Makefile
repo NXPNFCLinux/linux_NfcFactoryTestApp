@@ -3,7 +3,8 @@ CC=gcc
 CFILES=NfcFactoryTestApp.c
 
 CFILES_DRV= tml_drv.c
-CFILES_ALT= tml_alt.c
+CFILES_I2C= tml_alt-i2c.c
+CFILES_SPI= tml_alt-spi.c
 
 INCLUDES= -I/usr/include/ -I./
 
@@ -18,11 +19,18 @@ else
 	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_DRV) $(LIBS)
 endif
 
-alt:
+alt-i2c:
 ifeq ("$(DEBUG)","ON")
-	$(CC) -o NfcFactoryTestApp $(CFLAGS) -DDEBUG $(CFILES) $(CFILES_ALT) $(LIBS)
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) -DDEBUG $(CFILES) $(CFILES_I2C) $(LIBS)
 else
-	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_ALT) $(LIBS)
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_I2C) $(LIBS)
+endif
+
+alt-spi:
+ifeq ("$(DEBUG)","ON")
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) -DDEBUG $(CFILES) $(CFILES_SPI) $(LIBS)
+else
+	$(CC) -o NfcFactoryTestApp $(CFLAGS) $(CFILES) $(CFILES_SPI) $(LIBS)
 endif
 
 clean:

@@ -7,7 +7,6 @@ Allows setting the NFC controller into either:
  - Functional mode (card detection)
  - PRBS (Pseudo Random Binary Sequence) mode (continuous modulation)
  - Standby mode (for power consumption measurment)
-
 Additionnaly, the application allows to:
  - Dump all RF settings values
  - Set RF settings
@@ -18,8 +17,9 @@ Additionnaly, the application allows to:
 
 To build the application: "$ make <option>" with <option>:
   - drv: application communicates with PN71xx through kernel driver (either nxpnfc or pn5xx_i2c)
-  - alt: application communicates with PN71xx through alternate solution (see tml_alt.c for connection definition)
+  - alt-i2c: application communicates with PN71xx through alternate I2C solution (see tml_alt-i2c.c for connection definition)
+  - alt-spi: application communicates with PN71xx through alternate SPI solution (see tml_alt-spi.c for connection definition)
 
 Adding "DEBUG=ON" statement to the make command configure the application to display all NCI exchanges.
 
-More information about this application can be found in AN11697: http://www.nxp.com/doc/AN11697
+More information about the application can be found in AN13287 (http://www.nxp.com/doc/AN13287)
