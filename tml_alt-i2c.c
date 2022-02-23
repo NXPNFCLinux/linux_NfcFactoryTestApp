@@ -150,11 +150,7 @@ void tml_reset(int handle)
 int tml_send(int handle, char *pBuff, int buffLen)
 {
     int ret = write(handle, pBuff, buffLen);
-    if(ret <= 0) {
-        /* retry to handle standby mode */
-        ret = write(handle, pBuff, buffLen);
-        if(ret <= 0) return 0;
-    }
+    if(ret <= 0) return 0;
     PRINT_BUF(">> ", pBuff, ret);
     return ret;
 }
@@ -193,7 +189,10 @@ int tml_receive(int handle, char *pBuff, int buffLen)
 int tml_transceive(int handle, char *pTx, int TxLen, char *pRx, int RxLen)
 {
     int NbBytes = 0;
-    if(tml_send(handle, pTx, TxLen) == 0) return 0;
+    if(tml_send(handle, pTx, TxLen) == 0) {
+        usleep(10 * 1000);
+        if(tml_send(handle, pTx, TxLen) == 0) return 0;
+    }
     while(NbBytes==0) NbBytes = tml_receive(handle, pRx, RxLen);
     return NbBytes;
 }

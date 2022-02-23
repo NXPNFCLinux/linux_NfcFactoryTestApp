@@ -203,8 +203,7 @@ int tml_send(int handle, char *pBuff, int buffLen)
     spi.cs_change = 0;
     ret = ioctl(handle, SPI_IOC_MESSAGE(1), &spi);
     if (rx_buf[0] != 0xFF) ret =0;
-
-    PRINT_BUF(">> ", pBuff, ret);
+    else PRINT_BUF(">> ", pBuff, ret);
     usleep(10 * 1000);
     return ret;
 }
@@ -244,7 +243,9 @@ int tml_receive(int handle, char *pBuff, int buffLen)
 int tml_transceive(int handle, char *pTx, int TxLen, char *pRx, int RxLen)
 {
     int NbBytes = 0;
-    if(tml_send(handle, pTx, TxLen) == 0) return 0;
+    if(tml_send(handle, pTx, TxLen) == 0) {
+	if(tml_send(handle, pTx, TxLen) == 0) return 0;
+    }
     while(NbBytes==0) NbBytes = tml_receive(handle, pRx, RxLen);
     return NbBytes;
 }

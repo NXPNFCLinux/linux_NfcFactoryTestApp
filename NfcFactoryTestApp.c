@@ -41,6 +41,7 @@ static void RfOn (int handle)
         printf("Continuous RF ON test\n");
         tml_transceive(handle, NCIRfOn, sizeof(NCIRfOn), Answer, sizeof(Answer));
     }
+    fgets(Answer, sizeof(Answer), stdin);
     printf("NFC Controller is now in continuous RF ON mode - Press enter to stop\n");
     fgets(Answer, sizeof(Answer), stdin);
 }
@@ -60,7 +61,7 @@ static void Functional (int handle)
     printf("NFC Controller is now in functional mode - Press Crtl^Z to stop\n");
     while(1) {
     	do {
-        	tml_receive(handle,  Answer, sizeof(Answer));
+            tml_receive(handle,  Answer, sizeof(Answer));
     	} while ((Answer[0] != 0x61) || ((Answer[1] != 0x05) && (Answer[1] != 0x03)));
 	printf(" - tag discovered, restarting discovery loop ...\n"); tml_transceive(handle, NCIRestartDiscovery, sizeof(NCIRestartDiscovery), Answer, sizeof(Answer));
     }
@@ -318,9 +319,9 @@ static void Prbs (int handle)
     int tech, bitrate;
 
     printf("PRBS test:\n");
-    printf(" Select technology (A=0, B=1, F=2: ");
+    printf(" Select technology (A=0, B=1, F=2): ");
     scanf("%d", &tech);
-    printf(" Select bitrate (106=0, 212=1, 424=2, 848=3: ");
+    printf(" Select bitrate (106=0, 212=1, 424=2, 848=3): ");
     scanf("%d", &bitrate);
 
     if (gNfcController_generation == 1) {
@@ -333,6 +334,7 @@ static void Prbs (int handle)
         NCIPrbsPN7150[6] = bitrate;
         tml_transceive(handle, NCIPrbsPN7150, sizeof(NCIPrbsPN7150), Answer, sizeof(Answer));
     }
+    fgets(Answer, sizeof(Answer), stdin);
     printf("NFC Controller is now in PRBS mode - Press enter to stop\n");
     fgets(Answer, sizeof(Answer), stdin);
 }
@@ -351,6 +353,7 @@ static void Standby (int handle)
     /* Wait to allow PN71xx entering the standby mode */
     usleep(500 * 1000);
 
+    fgets(Answer, sizeof(Answer), stdin);
     printf("NFC Controller is now in standby mode - Press enter to stop\n");
     fgets(Answer, sizeof(Answer), stdin);
 }
@@ -369,7 +372,6 @@ static int reset_controller(int handle)
     /* Catch potential notification */
     usleep(100*1000);
     NbBytes = tml_receive(handle,  Answer, sizeof(Answer));
-
 
     tml_transceive(handle, NCICoreReset, sizeof(NCICoreReset), Answer, sizeof(Answer));
 
@@ -457,10 +459,17 @@ int main()
 
         switch(choice) {
 	    case 0: break;
-	    case 1: RfOn(nHandle); break;
+	    case 1: RfOn(nHandle);
+		reset_controller(nHandle);
+		break;
             case 2: Functional(nHandle); break;
-            case 3: Prbs(nHandle); break;
-            case 4: Standby(nHandle); break;
+            case 3: Prbs(nHandle);
+		reset_controller(nHandle);
+		break;
+            case 4: Standby(nHandle);
+		reset_controller(nHandle);
+                tml_transceive(nHandle, NCIDisableStandby, sizeof(NCIDisableStandby), Answer, sizeof(Answer));
+		break;
             case 5: Dump(nHandle); break;
             case 6: SetRF(nHandle); break;
             case 7: GetNciParam(nHandle); break;
