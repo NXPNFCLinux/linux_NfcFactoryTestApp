@@ -203,7 +203,7 @@ int tml_send(int handle, char *pBuff, int buffLen)
     spi.cs_change = 0;
     ret = ioctl(handle, SPI_IOC_MESSAGE(1), &spi);
     if (rx_buf[0] != 0xFF) ret =0;
-    else PRINT_BUF(">> ", pBuff, ret);
+    else PRINT_BUF(">> ", pBuff, buffLen);
     usleep(10 * 1000);
     return ret;
 }

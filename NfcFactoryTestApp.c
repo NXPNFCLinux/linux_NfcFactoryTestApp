@@ -314,7 +314,7 @@ static void SetPropParam (int handle)
 static void Prbs (int handle)
 {
     char NCIPrbsPN7120[] = {0x2F, 0x30, 0x04, 0x00, 0x00, 0x01, 0x01};
-    char NCIPrbsPN7150[] = {0x2F, 0x30, 0x06, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01};
+    char NCIPrbsPN71X0[] = {0x2F, 0x30, 0x06, 0x01, 0x00, 0x00, 0x00, 0x01, 0x01};
     char Answer[256];
     int tech, bitrate;
 
@@ -330,9 +330,9 @@ static void Prbs (int handle)
         tml_transceive(handle, NCIPrbsPN7120, sizeof(NCIPrbsPN7120), Answer, sizeof(Answer));
     }
     else {
-        NCIPrbsPN7150[5] = tech;
-        NCIPrbsPN7150[6] = bitrate;
-        tml_transceive(handle, NCIPrbsPN7150, sizeof(NCIPrbsPN7150), Answer, sizeof(Answer));
+        NCIPrbsPN71X0[5] = tech;
+        NCIPrbsPN71X0[6] = bitrate;
+        tml_transceive(handle, NCIPrbsPN71X0, sizeof(NCIPrbsPN71X0), Answer, sizeof(Answer));
     }
     fgets(Answer, sizeof(Answer), stdin);
     printf("NFC Controller is now in PRBS mode - Press enter to stop\n");
