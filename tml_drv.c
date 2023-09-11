@@ -36,9 +36,9 @@ void tml_close(int handle)
 
 void tml_reset(int handle)
 {
-    ioctl(handle, _IOW(0xE9, 0x01, unsigned int), 0);
+    ioctl(handle, _IOW(0xE9, 0x01, long), 0);
     usleep(10 * 1000);
-    ioctl(handle, _IOW(0xE9, 0x01, unsigned int), 1);
+    ioctl(handle, _IOW(0xE9, 0x01, long), 1);
     usleep(10 * 1000);
 }
 
